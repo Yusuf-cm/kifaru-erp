@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Profit & Loss — Kifaru{% endblock %}
+{% block heading %}Profit &amp; Loss{% endblock %}
+{% block subheading %}Income statement from posted journal entries.{% endblock %}
+
+{% block content %}
+<div class="k-card" style="max-width:720px">
+    <div class="k-sec-head"><h2>Income Statement</h2><span class="k-badge b-indigo">Live from GL</span></div>
+
+    <div class="rpt-row" style="font-weight:700"><span>Revenue</span><span></span></div>
+    {% for r in pnl.revenue_rows %}
+    <div class="rpt-row"><span style="padding-left:16px">{{ r.account.code }} · {{ r.account.name }}</span><span class="amt">{{ r.amount|floatformat:2 }}</span></div>
+    {% endfor %}
+    <div class="rpt-row total"><span>Total Revenue</span><span class="amt pos-amt">{{ pnl.revenue|floatformat:2 }}</span></div>
+
+    <div class="rpt-row" style="font-weight:700;margin-top:6px"><span>Cost of Goods Sold</span><span></span></div>
+    {% for r in pnl.cogs_rows %}
+    <div class="rpt-row"><span style="padding-left:16px">{{ r.account.code }} · {{ r.account.name }}</span><span class="amt neg-amt">({{ r.amount|floatformat:2 }})</span></div>
+    {% empty %}
+    <div class="rpt-row"><span style="padding-left:16px;color:var(--k-muted)">No COGS recorded yet</span><span class="amt">0.00</span></div>
+    {% endfor %}
+    <div class="rpt-row total"><span>Gross Profit</span><span class="amt {% if pnl.gross_profit >= 0 %}pos-amt{% else %}neg-amt{% endif %}">{{ pnl.gross_profit|floatformat:2 }}</span></div>
+
+    <div class="rpt-row" style="font-weight:700;margin-top:6px"><span>Operating Expenses</span><span></span></div>
+    {% for r in pnl.expense_rows %}
+    <div class="rpt-row"><span style="padding-left:16px">{{ r.account.code }} · {{ r.account.name }}</span><span class="amt neg-amt">({{ r.amount|floatformat:2 }})</span></div>
+    {% empty %}
+    <div class="rpt-row"><span style="padding-left:16px;color:var(--k-muted)">No expenses recorded yet</span><span class="amt">0.00</span></div>
+    {% endfor %}
+    <div class="rpt-row total"><span>Total Expenses</span><span class="amt neg-amt">({{ pnl.expenses|floatformat:2 }})</span></div>
+
+    <div class="rpt-row total" style="font-size:1.1rem;background:#eef2ff"><span>NET PROFIT</span><span class="amt {% if pnl.net_profit >= 0 %}pos-amt{% else %}neg-amt{% endif %}">{{ pnl.net_profit|floatformat:2 }} KES</span></div>
+</div>
+{% endblock %}

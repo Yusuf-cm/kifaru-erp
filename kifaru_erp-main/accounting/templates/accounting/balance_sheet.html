@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Balance Sheet — Kifaru{% endblock %}
+{% block heading %}Balance Sheet{% endblock %}
+{% block subheading %}Assets = Liabilities + Equity, straight from the ledger.{% endblock %}
+
+{% block content %}
+<div class="k-grid k-grid-2" style="align-items:start">
+    <div class="k-card">
+        <div class="k-sec-head"><h2>Assets</h2></div>
+        {% for r in bs.asset_rows %}
+        <div class="rpt-row"><span>{{ r.account.code }} · {{ r.account.name }}</span><span class="amt">{{ r.amount|floatformat:2 }}</span></div>
+        {% empty %}<div class="rpt-row"><span style="color:var(--k-muted)">No assets yet</span><span>0.00</span></div>{% endfor %}
+        <div class="rpt-row total"><span>Total Assets</span><span class="amt pos-amt">{{ bs.assets|floatformat:2 }}</span></div>
+    </div>
+
+    <div class="k-card">
+        <div class="k-sec-head"><h2>Liabilities &amp; Equity</h2></div>
+        <div class="rpt-row" style="font-weight:700"><span>Liabilities</span><span></span></div>
+        {% for r in bs.liab_rows %}
+        <div class="rpt-row"><span style="padding-left:16px">{{ r.account.code }} · {{ r.account.name }}</span><span class="amt">{{ r.amount|floatformat:2 }}</span></div>
+        {% empty %}<div class="rpt-row"><span style="padding-left:16px;color:var(--k-muted)">None</span><span>0.00</span></div>{% endfor %}
+        <div class="rpt-row"><span style="font-weight:600">Total Liabilities</span><span class="amt">{{ bs.liabilities|floatformat:2 }}</span></div>
+
+        <div class="rpt-row" style="font-weight:700;margin-top:6px"><span>Equity</span><span></span></div>
+        {% for r in bs.equity_rows %}
+        <div class="rpt-row"><span style="padding-left:16px">{{ r.account.code }} · {{ r.account.name }}</span><span class="amt">{{ r.amount|floatformat:2 }}</span></div>
+        {% endfor %}
+        <div class="rpt-row"><span style="padding-left:16px">Retained Earnings (net profit)</span><span class="amt">{{ bs.retained_earnings|floatformat:2 }}</span></div>
+        <div class="rpt-row"><span style="font-weight:600">Total Equity</span><span class="amt">{{ bs.equity_total|floatformat:2 }}</span></div>
+
+        <div class="rpt-row total"><span>Liabilities + Equity</span><span class="amt">{{ bs.liabilities_and_equity|floatformat:2 }}</span></div>
+    </div>
+</div>
+<div class="k-msg {% if bs.balances %}success{% else %}error{% endif %}" style="margin-top:16px">
+    {% if bs.balances %}✓ Books balance: Assets equal Liabilities + Equity.{% else %}⚠ Out of balance — check journal entries.{% endif %}
+</div>
+{% endblock %}

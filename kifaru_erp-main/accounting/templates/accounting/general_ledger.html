@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Ledger — {{ account.name }}{% endblock %}
+{% block heading %}{{ account.code }} · {{ account.name }}{% endblock %}
+{% block subheading %}{{ account.get_account_type_display }} account · running balance {{ balance|floatformat:2 }} KES{% endblock %}
+{% block topaction %}<a href="{% url 'chart_of_accounts' %}" class="k-btn k-btn-light"><i class="bi bi-arrow-left"></i> All accounts</a>{% endblock %}
+
+{% block content %}
+<div class="k-card">
+    <table class="k-table">
+        <thead><tr><th>Date</th><th>Reference</th><th>Description</th><th class="num">Debit</th><th class="num">Credit</th><th class="num">Balance</th></tr></thead>
+        <tbody>
+        {% for row in ledger %}
+            <tr>
+                <td>{{ row.line.journal_entry.date|date:"d M Y" }}</td>
+                <td>{{ row.line.journal_entry.reference }}</td>
+                <td>{{ row.line.journal_entry.description }}</td>
+                <td class="num">{% if row.line.debit %}{{ row.line.debit|floatformat:2 }}{% endif %}</td>
+                <td class="num">{% if row.line.credit %}{{ row.line.credit|floatformat:2 }}{% endif %}</td>
+                <td class="num fw-bold">{{ row.balance|floatformat:2 }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="k-empty">No postings for this account yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

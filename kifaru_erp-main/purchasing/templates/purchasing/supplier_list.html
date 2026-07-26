@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Suppliers — Kifaru{% endblock %}
+{% block heading %}Suppliers{% endblock %}
+{% block subheading %}Who you buy stock from.{% endblock %}
+
+{% block content %}
+<div class="k-grid" style="grid-template-columns:1fr 340px;align-items:start;gap:18px">
+    <div class="k-card">
+        <div class="k-sec-head"><h2>All Suppliers</h2></div>
+        <table class="k-table">
+            <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th class="num">Status</th></tr></thead>
+            <tbody>
+            {% for s in suppliers %}
+                <tr><td class="fw-bold">{{ s.name }}</td><td>{{ s.phone|default:"—" }}</td>
+                    <td>{{ s.email|default:"—" }}</td>
+                    <td class="num"><span class="k-badge {% if s.is_active %}b-green{% else %}b-gray{% endif %}">{% if s.is_active %}Active{% else %}Inactive{% endif %}</span></td></tr>
+            {% empty %}
+                <tr><td colspan="4" class="k-empty">No suppliers yet. Add one on the right.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <form method="post" class="k-card k-card-pad">{% csrf_token %}
+        <h2 style="font-size:1.05rem;margin:0 0 14px">Add Supplier</h2>
+        <div class="k-field"><label>Name</label><input name="name" class="k-input" required placeholder="e.g. Mombasa Distributors"></div>
+        <div class="k-field"><label>Phone</label><input name="phone" class="k-input" placeholder="07..."></div>
+        <div class="k-field"><label>Email</label><input name="email" type="email" class="k-input" placeholder="optional"></div>
+        <button class="k-btn k-btn-primary k-btn-lg"><i class="bi bi-plus-circle"></i> Add Supplier</button>
+    </form>
+</div>
+{% endblock %}

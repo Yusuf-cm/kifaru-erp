@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Journal Entries — Kifaru{% endblock %}
+{% block heading %}Journal Entries{% endblock %}
+{% block subheading %}Every posted double-entry transaction (latest 200).{% endblock %}
+
+{% block content %}
+<div class="k-card">
+    <table class="k-table">
+        <thead><tr><th>#</th><th>Date</th><th>Reference</th><th>Description</th><th>Lines (Dr / Cr)</th><th class="num">Status</th></tr></thead>
+        <tbody>
+        {% for e in entries %}
+            <tr>
+                <td>JE-{{ e.id }}</td>
+                <td>{{ e.date|date:"d M Y" }}</td>
+                <td>{{ e.reference }}</td>
+                <td>{{ e.description }}</td>
+                <td style="font-size:.82rem;color:var(--k-muted)">
+                    {% for l in e.lines.all %}{{ l.account.code }}
+                        {% if l.debit %}<span style="color:#059669">Dr {{ l.debit|floatformat:0 }}</span>{% else %}<span style="color:#dc2626">Cr {{ l.credit|floatformat:0 }}</span>{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}
+                </td>
+                <td class="num"><span class="k-badge {% if e.status == 'POSTED' %}b-green{% elif e.status == 'DRAFT' %}b-amber{% else %}b-gray{% endif %}">{{ e.status }}</span></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="k-empty">No journal entries yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

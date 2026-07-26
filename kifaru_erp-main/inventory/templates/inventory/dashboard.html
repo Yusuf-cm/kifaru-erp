@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Inventory — Kifaru{% endblock %}
+{% block heading %}Stock &amp; Products{% endblock %}
+{% block subheading %}Total inventory value: <strong>KES {{ total_value|floatformat:2 }}</strong>{% endblock %}
+{% block topaction %}
+<button class="k-btn k-btn-light" onclick="show('adjustModal')"><i class="bi bi-sliders"></i> Adjust Stock</button>
+<button class="k-btn k-btn-light" onclick="show('transferModal')"><i class="bi bi-arrow-left-right"></i> Transfer</button>
+<button class="k-btn k-btn-primary" onclick="show('productModal')"><i class="bi bi-plus-circle"></i> New Product</button>
+{% endblock %}
+
+{% block content %}
+<div class="k-card">
+    <div class="k-sec-head"><h2>Master Inventory</h2></div>
+    <table class="k-table">
+        <thead><tr><th>SKU</th><th>Product</th><th>Category</th><th class="num">Cost</th><th class="num">Price</th><th class="num">Stock</th><th class="num">Value</th></tr></thead>
+        <tbody>
+        {% for row in rows %}
+            <tr>
+                <td><span class="k-badge b-gray">{{ row.product.sku }}</span></td>
+                <td class="fw-bold">{{ row.product.name }}</td>
+                <td>{{ row.product.category.name }}</td>
+                <td class="num">{{ row.product.cost_price|floatformat:2 }}</td>
+                <td class="num">{{ row.product.selling_price|floatformat:2 }}</td>
+                <td class="num"><span class="k-badge {% if row.stock <= 0 %}b-red{% elif row.low %}b-amber{% else %}b-green{% endif %}">{{ row.stock }}</span></td>
+                <td class="num">{{ row.value|floatformat:2 }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="7" class="k-empty">No products yet. Click "New Product" to add one.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- New Product -->
+<div class="k-modal" id="productModal"><div class="k-modal-box">
+    <form method="post" action="{% url 'product_create' %}">{% csrf_token %}
+        <h2>New Product</h2>
+        <div class="k-field"><label>Product Name</label><input name="name" class="k-input" required></div>
+        <div class="k-field"><label>SKU / Barcode</label><input name="sku" class="k-input" required></div>
+        <div class="k-field"><label>Category</label><input name="category" class="k-input" list="cats" placeholder="e.g. Groceries">
+            <datalist id="cats">{% for c in categories %}<option value="{{ c.name }}">{% endfor %}</datalist></div>
+        <div style="display:flex;gap:10px">
+            <div class="k-field" style="flex:1"><label>Cost Price</label><input name="cost_price" type="number" step="0.01" class="k-input" value="0"></div>
+            <div class="k-field" style="flex:1"><label>Selling Price</label><input name="selling_price" type="number" step="0.01" class="k-input" value="0"></div>
+            <div class="k-field" style="flex:1"><label>Reorder At</label><input name="reorder_level" type="number" step="1" class="k-input" value="5"></div>
+        </div>
+        <div class="modal-actions"><button type="button" class="k-btn k-btn-light" onclick="hide('productModal')">Cancel</button><button class="k-btn k-btn-primary">Add Product</button></div>
+    </form>
+</div></div>
+
+<!-- Adjust Stock -->
+<div class="k-modal" id="adjustModal"><div class="k-modal-box">
+    <form method="post" action="{% url 'stock_adjust' %}">{% csrf_token %}
+        <h2>Adjust / Opening Stock</h2>
+        <div class="k-field"><label>Product</label><select name="product" class="k-select">{% for p in products %}<option value="{{ p.id }}">{{ p.sku }} · {{ p.name }}</option>{% endfor %}</select></div>
+        <div class="k-field"><label>Warehouse</label><select name="warehouse" class="k-select">{% for w in warehouses %}<option value="{{ w.id }}">{{ w.name }}</option>{% endfor %}</select></div>
+        <div class="k-field"><label>Quantity (+ to add, − to remove)</label><input name="quantity" type="number" step="0.01" class="k-input" placeholder="e.g. 50" required></div>
+        <div class="modal-actions"><button type="button" class="k-btn k-btn-light" onclick="hide('adjustModal')">Cancel</button><button class="k-btn k-btn-primary">Apply</button></div>
+    </form>
+</div></div>
+
+<!-- Transfer -->
+<div class="k-modal" id="transferModal"><div class="k-modal-box">
+    <h2>Transfer Stock</h2>
+    <div class="k-field"><label>Product</label><select class="k-select" id="tProduct">{% for p in products %}<option value="{{ p.id }}">{{ p.sku }} · {{ p.name }}</option>{% endfor %}</select></div>
+    <div style="display:flex;gap:10px">
+        <div class="k-field" style="flex:1"><label>From</label><select class="k-select" id="tSource">{% for w in warehouses %}<option value="{{ w.id }}">{{ w.name }}</option>{% endfor %}</select></div>
+        <div class="k-field" style="flex:1"><label>To</label><select class="k-select" id="tDest">{% for w in warehouses %}<option value="{{ w.id }}">{{ w.name }}</option>{% endfor %}</select></div>
+    </div>
+    <div class="k-field"><label>Quantity</label><input type="number" id="tQty" class="k-input" min="1" placeholder="e.g. 5"></div>
+    <div class="modal-actions"><button class="k-btn k-btn-light" onclick="hide('transferModal')">Cancel</button><button class="k-btn k-btn-primary" onclick="doTransfer(this)">Transfer</button></div>
+</div></div>
+{% endblock %}
+
+{% block head %}
+<style>
+.k-modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:100;align-items:center;justify-content:center;padding:16px}
+.k-modal.open{display:flex}
+.k-modal-box{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:480px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.k-modal-box h2{margin:0 0 16px;font-size:1.2rem}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function show(id){document.getElementById(id).classList.add('open')}
+function hide(id){document.getElementById(id).classList.remove('open')}
+function doTransfer(btn){
+    const p=tProduct.value,s=tSource.value,d=tDest.value,q=tQty.value;
+    if(!q||s===d){alert('Pick different warehouses and a quantity.');return;}
+    btn.disabled=true;
+    fetch('{% url "api_transfer_stock" %}',{method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
+        body:JSON.stringify({product_id:p,source_id:s,dest_id:d,quantity:q})})
+    .then(r=>r.json()).then(d=>{ if(d.status==='success'){location.reload();}else{alert('❌ '+d.message);btn.disabled=false;} })
+    .catch(()=>{alert('Network error');btn.disabled=false;});
+}
+</script>
+{% endblock %}

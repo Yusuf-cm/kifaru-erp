@@ -1,0 +1,28 @@
+# render.yaml
+# Place this file in the ROOT of your project (same level as manage.py)
+# Render reads this automatically when you connect your repo.
+
+services:
+  - type: web
+    name: kifaru-erp
+    runtime: python
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --no-input
+      python manage.py migrate
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true        # Render auto-generates a secure key
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kifaru-db
+          property: connectionString
+
+databases:
+  - name: kifaru-db
+    databaseName: kifaru_db
+    user: kifaru_user
+    plan: free                     # Free tier: 1GB, sufficient for launch

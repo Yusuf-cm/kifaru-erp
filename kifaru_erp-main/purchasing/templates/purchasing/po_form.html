@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}New Purchase Order — Kifaru{% endblock %}
+{% block heading %}New Purchase Order{% endblock %}
+{% block subheading %}Add the goods you're buying. Receiving it later adds stock + posts to the ledger.{% endblock %}
+{% block topaction %}<a href="{% url 'po_list' %}" class="k-btn k-btn-light"><i class="bi bi-arrow-left"></i> Back</a>{% endblock %}
+
+{% block content %}
+<form method="post" class="k-card k-card-pad" style="max-width:860px">{% csrf_token %}
+    <div class="k-grid k-grid-2" style="grid-template-columns:1fr 1fr;margin-bottom:12px">
+        <div class="k-field"><label>Supplier</label>
+            <select name="supplier" class="k-select" required>
+                <option value="">-- choose supplier --</option>
+                {% for s in suppliers %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="k-field"><label>Deliver to Warehouse</label>
+            <select name="warehouse" class="k-select" required>
+                {% for w in warehouses %}<option value="{{ w.id }}">{{ w.name }}</option>{% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <label style="font-weight:600;font-size:.85rem">Line Items</label>
+    <table class="k-table" id="lineTable" style="margin:8px 0">
+        <thead><tr><th>Product</th><th style="width:120px">Quantity</th><th style="width:150px">Unit Cost (KES)</th><th style="width:40px"></th></tr></thead>
+        <tbody id="lineBody"></tbody>
+    </table>
+    <button type="button" class="k-btn k-btn-light" onclick="addLine()"><i class="bi bi-plus"></i> Add line</button>
+
+    <div style="margin-top:20px;display:flex;gap:10px">
+        <button type="submit" class="k-btn k-btn-primary"><i class="bi bi-check-circle"></i> Create Draft PO</button>
+        <a href="{% url 'po_list' %}" class="k-btn k-btn-light">Cancel</a>
+    </div>
+</form>
+
+<template id="lineTpl">
+    <tr>
+        <td><select name="product" class="k-select">
+            {% for p in products %}<option value="{{ p.id }}" data-cost="{{ p.cost_price }}">{{ p.name }} ({{ p.sku }})</option>{% endfor %}
+        </select></td>
+        <td><input type="number" name="quantity" class="k-input" min="0" step="1" value="1"></td>
+        <td><input type="number" name="unit_cost" class="k-input" min="0" step="0.01" value="0"></td>
+        <td><button type="button" class="k-btn k-btn-light" style="padding:6px 10px" onclick="this.closest('tr').remove()">✕</button></td>
+    </tr>
+</template>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addLine(){
+    const tpl = document.getElementById('lineTpl').content.cloneNode(true);
+    const sel = tpl.querySelector('select[name=product]');
+    const cost = tpl.querySelector('input[name=unit_cost]');
+    sel.addEventListener('change', e => { cost.value = e.target.selectedOptions[0].dataset.cost || 0; });
+    cost.value = sel.selectedOptions[0]?.dataset.cost || 0;
+    document.getElementById('lineBody').appendChild(tpl);
+}
+addLine();
+</script>
+{% endblock %}

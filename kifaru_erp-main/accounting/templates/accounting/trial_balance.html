@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Trial Balance — Kifaru{% endblock %}
+{% block heading %}Trial Balance{% endblock %}
+{% block subheading %}Every account's balance on its natural side.{% endblock %}
+
+{% block content %}
+<div class="k-card" style="max-width:760px">
+    <table class="k-table">
+        <thead><tr><th>Code</th><th>Account</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
+        <tbody>
+        {% for row in tb.rows %}
+            <tr><td>{{ row.account.code }}</td><td>{{ row.account.name }}</td>
+                <td class="num">{% if row.debit %}{{ row.debit|floatformat:2 }}{% endif %}</td>
+                <td class="num">{% if row.credit %}{{ row.credit|floatformat:2 }}{% endif %}</td></tr>
+        {% empty %}
+            <tr><td colspan="4" class="k-empty">No postings yet. Make a sale or receive a purchase order.</td></tr>
+        {% endfor %}
+        </tbody>
+        <tfoot><tr style="font-weight:800;background:#fafbff">
+            <td colspan="2" style="padding:13px 20px">TOTAL</td>
+            <td class="num" style="padding:13px 20px">{{ tb.total_debit|floatformat:2 }}</td>
+            <td class="num" style="padding:13px 20px">{{ tb.total_credit|floatformat:2 }}</td></tr></tfoot>
+    </table>
+</div>
+<div class="k-msg {% if tb.total_debit == tb.total_credit %}success{% else %}error{% endif %}" style="margin-top:16px;max-width:760px">
+    {% if tb.total_debit == tb.total_credit %}✓ Debits equal credits — the books are balanced.{% else %}⚠ Debits ≠ Credits.{% endif %}
+</div>
+{% endblock %}

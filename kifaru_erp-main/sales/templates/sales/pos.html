@@ -1,0 +1,348 @@
+<!-- sales/templates/sales/pos.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kifaru POS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f4f6f9; height: 100vh; overflow: hidden; }
+        .pos-header { background: #1a202c; color: white; }
+        .product-card { transition: all 0.2s ease; border: none; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; }
+        .product-card:hover { transform: translateY(-4px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); border-color: #0d6efd;}
+        .cart-panel { background: white; border-left: 1px solid #e2e8f0; height: calc(100vh - 60px); display: flex; flex-direction: column; }
+        .cart-items { flex-grow: 1; overflow-y: auto; }
+        .filter-btn.active { background-color: #0d6efd; color: white; }
+        .quick-cash-btn { border-radius: 8px; font-weight: bold; }
+        .product-icon-placeholder { height: 100px; background: #e9ecef; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; color: #adb5bd; font-size: 2rem;}
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar pos-header px-3 shadow-sm" style="height: 60px;">
+    <div class="d-flex align-items-center w-100">
+        <h4 class="mb-0 me-4 fw-bold text-success"><i class="bi bi-shop"></i> Kifaru POS</h4>
+        <div class="input-group" style="max-width: 400px;">
+            <span class="input-group-text bg-white border-0"><i class="bi bi-search"></i></span>
+            <input type="text" id="searchInput" class="form-control border-0 shadow-none" placeholder="Scan Barcode or Search Product..." onkeyup="filterProducts()">
+        </div>
+        <div class="ms-auto text-light">
+            <span class="me-3"><i class="bi bi-geo-alt-fill text-danger"></i> {{ storefront.name }}</span>
+            <span><i class="bi bi-person-circle"></i> {{ request.user.username }}</span>
+            <a href="/" class="btn btn-sm btn-outline-light ms-3">Exit POS</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid p-0">
+    <div class="row g-0">
+        
+        <div class="col-md-8 p-3" style="height: calc(100vh - 60px); overflow-y: auto;">
+            <div class="d-flex overflow-auto mb-3 pb-2" style="white-space: nowrap;">
+                <button class="btn btn-outline-primary rounded-pill me-2 filter-btn active" onclick="filterCategory('ALL', this)">All Items</button>
+                {% for category in categories %}
+                <button class="btn btn-outline-primary rounded-pill me-2 filter-btn" onclick="filterCategory('{{ category.id }}', this)">{{ category.name }}</button>
+                {% endfor %}
+            </div>
+
+            <div class="row g-3" id="productGrid">
+                {% for product in products %}
+                <div class="col-xl-3 col-lg-4 col-md-6 product-item" data-category="{{ product.category.id }}" data-name="{{ product.name|lower }}" data-sku="{{ product.sku|lower }}">
+                    
+                    <!--
+                        REQUIRES VIEW ANNOTATION:
+                        `product.storefront_stock` must be annotated in sales/views.py pos_dashboard().
+                        Add this to the queryset:
+
+                            from django.db.models import Sum, Case, When, DecimalField
+                            from django.db.models.functions import Coalesce
+
+                            products = Product.objects.filter(is_active=True).annotate(
+                                storefront_stock=Coalesce(
+                                    Sum(
+                                        'movements__quantity',
+                                        filter=Q(movements__warehouse=storefront)
+                                    ),
+                                    Decimal('0.00')
+                                )
+                            )
+
+                        Without this, storefront_stock will always be empty and every
+                        product will render as "Out of Stock".
+                    -->
+                    {% if product.storefront_stock > 0 %}
+                    <div class="card product-card h-100"
+                         onclick="addToCart('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.storefront_stock|floatformat:0 }}', '{{ product.selling_price }}')">
+                    {% else %}
+                    <div class="card product-card h-100 bg-light" style="opacity: 0.6; cursor: not-allowed;">
+                    {% endif %}
+                    
+                        <div class="product-icon-placeholder">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <div class="card-body p-2 text-center">
+                            <h6 class="card-title text-truncate mb-1" style="font-size: 0.9rem; font-weight: 600;">{{ product.name }}</h6>
+                            <p class="text-muted mb-1" style="font-size: 0.75rem;">{{ product.sku }}</p>
+                            <p class="fw-bold text-primary mb-2" style="font-size: 0.95rem;">KES {{ product.selling_price|floatformat:0 }}</p>
+
+                            {% if product.storefront_stock > 0 %}
+                                <span class="badge bg-success rounded-pill px-3 py-2">{{ product.storefront_stock }} In Stock</span>
+                            {% else %}
+                                <span class="badge bg-danger rounded-pill px-3 py-2">Out of Stock</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-4 cart-panel shadow-lg">
+            <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-cart3"></i> Current Order</h5>
+                <button class="btn btn-sm btn-outline-danger" onclick="clearCart()"><i class="bi bi-trash"></i> Clear</button>
+            </div>
+
+            <div class="p-3 cart-items">
+                <table class="table table-borderless table-hover mb-0" id="cartTable">
+                    <tbody id="cartBody">
+                        <tr><td colspan="4" class="text-center text-muted mt-5 py-5"><i class="bi bi-cart-x fs-1 d-block mb-2"></i> Cart is empty</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="p-3 bg-white border-top shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded-3 border">
+                    <h3 class="mb-0 text-muted">Total Due:</h3>
+                    <h2 class="mb-0 fw-bold text-primary"><span id="cartTotal">0.00</span> <span class="fs-5">KES</span></h2>
+                </div>
+
+                <div class="mb-3">
+                    <select class="form-select form-select-lg" id="paymentMethod" onchange="togglePaymentFields()">
+                        <option value="CASH">💵 Cash Payment</option>
+                        <option value="MPESA">📱 M-Pesa</option>
+                        <option value="BANK">🏦 Bank Transfer</option>
+                    </select>
+                </div>
+
+                <div id="mpesaField" class="mb-3" style="display: none;">
+                    <input type="text" id="mpesaRef" class="form-control form-control-lg border-success" placeholder="Enter M-Pesa Ref (e.g. QKT5G...)">
+                </div>
+
+                <div id="cashCalculator">
+                    <div class="d-flex gap-2 mb-2">
+                        <button class="btn btn-outline-secondary quick-cash-btn flex-fill" onclick="setCash(1000)">1K</button>
+                        <button class="btn btn-outline-secondary quick-cash-btn flex-fill" onclick="setCash(5000)">5K</button>
+                        <button class="btn btn-outline-secondary quick-cash-btn flex-fill" onclick="setCash(10000)">10K</button>
+                        <button class="btn btn-outline-primary quick-cash-btn flex-fill" onclick="setExactCash()">Exact</button>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label text-muted small mb-1">Cash Tendered</label>
+                            <input type="number" id="cashTendered" class="form-control form-control-lg fw-bold" placeholder="0.00" onkeyup="calculateChange()">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small mb-1">Change Due</label>
+                            <input type="text" id="changeDue" class="form-control form-control-lg fw-bold text-danger bg-white" value="0.00" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-success btn-lg w-100 fw-bold py-3 shadow" onclick="checkout(event)">
+                    <i class="bi bi-check-circle"></i> COMPLETE SALE
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let cart = [];
+    let cartTotalAmount = 0;
+
+    function filterProducts() {
+        let input = document.getElementById('searchInput').value.toLowerCase();
+        let items = document.getElementsByClassName('product-item');
+        for (let i = 0; i < items.length; i++) {
+            let name = items[i].getAttribute('data-name');
+            let sku = items[i].getAttribute('data-sku');
+            if (name.includes(input) || sku.includes(input)) {
+                items[i].style.display = "";
+            } else {
+                items[i].style.display = "none";
+            }
+        }
+    }
+
+    function filterCategory(catId, btnElement) {
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
+        let items = document.getElementsByClassName('product-item');
+        for (let i = 0; i < items.length; i++) {
+            if (catId === 'ALL' || items[i].getAttribute('data-category') === catId) {
+                items[i].style.display = "";
+            } else {
+                items[i].style.display = "none";
+            }
+        }
+    }
+
+    function togglePaymentFields() {
+        let method = document.getElementById('paymentMethod').value;
+        document.getElementById('mpesaField').style.display = (method === 'MPESA') ? 'block' : 'none';
+        document.getElementById('cashCalculator').style.display = (method === 'CASH') ? 'block' : 'none';
+    }
+
+    function setCash(amount) {
+        document.getElementById('cashTendered').value = amount;
+        calculateChange();
+    }
+
+    function setExactCash() {
+        document.getElementById('cashTendered').value = cartTotalAmount;
+        calculateChange();
+    }
+
+    function addToCart(productId, productName, maxStock, sellingPrice) {
+        let existingItem = cart.find(item => item.product_id === productId);
+        let currentQtyInCart = existingItem ? existingItem.quantity : 0;
+
+        // Guard: enforce storefront stock limit on frontend
+        if (currentQtyInCart >= parseFloat(maxStock)) {
+            alert("❌ Max stock reached! Only " + maxStock + " units available.");
+            return;
+        }
+
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            let price = parseFloat(sellingPrice);
+            // If no price was set on the product, ask once as a fallback.
+            if (isNaN(price) || price <= 0) {
+                let raw = prompt(`No price set for ${productName}. Enter selling price (KES):`);
+                if (!raw) return;
+                price = parseFloat(raw.replace(/,/g, '').trim());
+                if (isNaN(price) || price <= 0) { alert("❌ Invalid price."); return; }
+            }
+            cart.push({ product_id: productId, name: productName, quantity: 1, price: price });
+        }
+
+        updateCartUI();
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        updateCartUI();
+    }
+
+    function clearCart() {
+        if(confirm("Are you sure you want to clear the cart?")) {
+            cart = [];
+            updateCartUI();
+            document.getElementById('cashTendered').value = '';
+            calculateChange();
+        }
+    }
+
+    function updateCartUI() {
+        let tbody = document.getElementById('cartBody');
+        tbody.innerHTML = '';
+        cartTotalAmount = 0;
+
+        if (cart.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted mt-5 py-5"><i class="bi bi-cart-x fs-1 d-block mb-2"></i> Cart is empty</td></tr>`;
+            document.getElementById('cartTotal').innerText = "0.00";
+            calculateChange();
+            return;
+        }
+
+        cart.forEach((item, index) => {
+            let lineTotal = item.quantity * item.price;
+            cartTotalAmount += lineTotal;
+            tbody.innerHTML += `
+                <tr class="align-middle border-bottom">
+                    <td class="fw-bold text-dark">${item.name}</td>
+                    <td><span class="badge bg-secondary rounded-pill px-2 py-1">${item.quantity}</span></td>
+                    <td class="text-end">@${item.price.toLocaleString()}</td>
+                    <td class="text-end fw-bold text-primary">${lineTotal.toLocaleString()}</td>
+                    <td class="text-end"><button class="btn btn-sm btn-light text-danger" onclick="removeFromCart(${index})"><i class="bi bi-x-circle-fill"></i></button></td>
+                </tr>
+            `;
+        });
+        
+        document.getElementById('cartTotal').innerText = cartTotalAmount.toLocaleString();
+        calculateChange(); 
+    }
+
+    function calculateChange() {
+        let tendered = parseFloat(document.getElementById('cashTendered').value);
+        let changeInput = document.getElementById('changeDue');
+
+        if (isNaN(tendered) || tendered < cartTotalAmount) {
+            changeInput.value = "0.00";
+        } else {
+            changeInput.value = (tendered - cartTotalAmount).toLocaleString();
+        }
+    }
+
+    function checkout(event) {
+        if (cart.length === 0) { alert("Cart is empty!"); return; }
+
+        let method = document.getElementById('paymentMethod').value;
+        let reference = "";
+        
+        if (method === 'CASH') {
+            let tendered = parseFloat(document.getElementById('cashTendered').value);
+            if (isNaN(tendered) || tendered < cartTotalAmount) {
+                alert("❌ Cash tendered is less than the total due!");
+                return;
+            }
+        } else if (method === 'MPESA') {
+            reference = document.getElementById('mpesaRef').value.trim();
+            if (reference === "") {
+                alert("❌ Please enter the M-Pesa Transaction Reference.");
+                return;
+            }
+        }
+
+        let payload = {
+            items: cart,
+            payment_method: method,
+            warehouse_id: "{{ storefront.id }}",
+            reference: reference
+        };
+
+        let btn = event.target;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+
+        fetch('/api/checkout/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert("✅ " + data.message);
+                window.location.reload(); 
+            } else {
+                alert("❌ Error: " + data.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle"></i> COMPLETE SALE';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("❌ Network Error. Please try again.");
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle"></i> COMPLETE SALE';
+        });
+    }
+</script>
+</body>
+</html>

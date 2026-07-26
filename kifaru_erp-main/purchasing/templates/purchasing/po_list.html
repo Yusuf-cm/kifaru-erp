@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Purchase Orders — Kifaru{% endblock %}
+{% block heading %}Purchase Orders{% endblock %}
+{% block subheading %}Buy stock, then "Receive" to add it to inventory and the books.{% endblock %}
+{% block topaction %}<a href="{% url 'po_create' %}" class="k-btn k-btn-primary"><i class="bi bi-plus-circle"></i> New Purchase Order</a>{% endblock %}
+
+{% block content %}
+<div class="k-card">
+    <table class="k-table">
+        <thead><tr><th>PO Number</th><th>Supplier</th><th>Warehouse</th><th>Items</th><th class="num">Total (KES)</th><th>Status</th><th class="num">Action</th></tr></thead>
+        <tbody>
+        {% for row in rows %}
+            <tr>
+                <td class="fw-bold">{{ row.po.po_number }}</td>
+                <td>{{ row.po.supplier.name }}</td>
+                <td>{{ row.po.warehouse.name }}</td>
+                <td>{{ row.count }}</td>
+                <td class="num">{{ row.total|floatformat:2 }}</td>
+                <td><span class="k-badge {% if row.po.status == 'RECEIVED' %}b-green{% elif row.po.status == 'DRAFT' %}b-amber{% else %}b-gray{% endif %}">{{ row.po.get_status_display }}</span></td>
+                <td class="num">
+                    {% if row.po.status == 'DRAFT' %}
+                    <form method="post" action="{% url 'po_receive' row.po.id %}" style="display:flex;gap:6px;justify-content:flex-end">{% csrf_token %}
+                        <select name="payment_method" class="k-select" style="width:auto;padding:5px 8px">
+                            <option value="CASH">Cash</option><option value="MPESA">M-Pesa</option>
+                            <option value="BANK">Bank</option><option value="CREDIT">On credit</option>
+                        </select>
+                        <button class="k-btn k-btn-green" style="padding:6px 12px"><i class="bi bi-box-arrow-in-down"></i> Receive</button>
+                    </form>
+                    {% else %}<span style="color:var(--k-muted)">—</span>{% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="7" class="k-empty">No purchase orders yet. Create one to stock your shop.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

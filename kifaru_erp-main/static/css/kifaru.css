@@ -1,0 +1,102 @@
+/* Kifaru ERP — unified design system */
+:root{
+  --k-bg:#f4f6fb; --k-surface:#ffffff; --k-ink:#0f172a; --k-muted:#64748b;
+  --k-border:#e6e9f0; --k-brand:#4f46e5; --k-brand-2:#6366f1;
+  --k-green:#10b981; --k-amber:#f59e0b; --k-red:#ef4444; --k-cyan:#06b6d4; --k-purple:#8b5cf6;
+  --k-sidebar:#0b1220; --k-sidebar-ink:#94a3b8;
+  --k-shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.06);
+}
+*{box-sizing:border-box}
+body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--k-bg);color:var(--k-ink);margin:0}
+
+/* Layout */
+.k-shell{display:flex;min-height:100vh}
+.k-sidebar{width:250px;background:var(--k-sidebar);color:var(--k-sidebar-ink);position:fixed;top:0;bottom:0;left:0;display:flex;flex-direction:column;z-index:50}
+.k-main{margin-left:250px;flex:1;padding:26px 30px;width:calc(100% - 250px)}
+@media(max-width:900px){.k-sidebar{transform:translateX(-100%);transition:.25s}.k-sidebar.open{transform:none}.k-main{margin-left:0;width:100%;padding:16px}}
+
+/* Brand + nav */
+.k-brand{padding:20px 22px;font-weight:800;font-size:1.35rem;color:#fff;letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
+.k-brand .dot{color:var(--k-brand-2)}
+.k-nav{padding:8px 12px;overflow-y:auto;flex:1}
+.k-nav .sec{font-size:.66rem;text-transform:uppercase;letter-spacing:.09em;color:#475569;font-weight:700;padding:16px 12px 6px}
+.k-nav a{display:flex;align-items:center;gap:11px;color:var(--k-sidebar-ink);text-decoration:none;padding:10px 12px;border-radius:9px;font-weight:500;font-size:.92rem;margin-bottom:2px;transition:.15s}
+.k-nav a:hover{background:#111a2e;color:#fff}
+.k-nav a.active{background:linear-gradient(90deg,var(--k-brand),var(--k-brand-2));color:#fff;box-shadow:0 6px 14px rgba(79,70,229,.35)}
+.k-nav a i{width:20px;text-align:center;font-size:1.05rem}
+.k-side-foot{padding:14px;border-top:1px solid #17223a}
+.k-side-foot a{color:var(--k-sidebar-ink);text-decoration:none;font-size:.85rem;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px}
+.k-side-foot a:hover{background:#111a2e;color:#fff}
+
+/* Topbar */
+.k-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap}
+.k-top h1{font-size:1.5rem;font-weight:800;margin:0;letter-spacing:-.02em}
+.k-top p{margin:2px 0 0;color:var(--k-muted);font-size:.9rem}
+.k-chip{background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:6px 13px;border-radius:999px;font-weight:700;font-size:.8rem}
+.k-hamb{display:none;background:var(--k-surface);border:1px solid var(--k-border);border-radius:9px;width:40px;height:40px;font-size:1.2rem}
+@media(max-width:900px){.k-hamb{display:inline-block}}
+
+/* Cards */
+.k-card{background:var(--k-surface);border:1px solid var(--k-border);border-radius:16px;box-shadow:var(--k-shadow)}
+.k-card-pad{padding:20px}
+.k-grid{display:grid;gap:18px}
+.k-grid-4{grid-template-columns:repeat(4,1fr)}
+.k-grid-3{grid-template-columns:repeat(3,1fr)}
+.k-grid-2{grid-template-columns:2fr 1fr}
+@media(max-width:1100px){.k-grid-4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){.k-grid-4,.k-grid-3,.k-grid-2{grid-template-columns:1fr}}
+
+/* Metric */
+.k-metric{padding:20px}
+.k-metric .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.k-metric .lbl{color:var(--k-muted);font-weight:600;font-size:.85rem}
+.k-metric .val{font-size:1.7rem;font-weight:800;letter-spacing:-.02em}
+.k-metric .sub{font-size:.8rem;color:var(--k-muted)}
+.k-ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.i-indigo{background:#eef2ff;color:var(--k-brand)} .i-green{background:#ecfdf5;color:var(--k-green)}
+.i-amber{background:#fffbeb;color:var(--k-amber)} .i-purple{background:#f5f3ff;color:var(--k-purple)}
+.i-cyan{background:#ecfeff;color:var(--k-cyan)} .i-red{background:#fef2f2;color:var(--k-red)}
+
+/* Section head */
+.k-sec-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--k-border)}
+.k-sec-head h2{font-size:1.05rem;font-weight:700;margin:0}
+
+/* Table */
+.k-table{width:100%;border-collapse:collapse}
+.k-table th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--k-muted);font-weight:700;padding:12px 20px;border-bottom:1px solid var(--k-border);background:#fafbff}
+.k-table td{padding:13px 20px;border-bottom:1px solid #f1f3f9;font-size:.9rem}
+.k-table tr:last-child td{border-bottom:none}
+.k-table tbody tr:hover{background:#fafbff}
+.k-table .num{text-align:right;font-variant-numeric:tabular-nums}
+.k-empty{text-align:center;color:var(--k-muted);padding:40px 20px}
+
+/* Badges & buttons */
+.k-badge{padding:4px 10px;border-radius:999px;font-size:.74rem;font-weight:700;display:inline-block}
+.b-green{background:#ecfdf5;color:#059669} .b-red{background:#fef2f2;color:#dc2626}
+.b-amber{background:#fffbeb;color:#b45309} .b-gray{background:#f1f5f9;color:#475569}
+.b-indigo{background:#eef2ff;color:#4f46e5}
+.k-btn{display:inline-flex;align-items:center;gap:7px;border:none;border-radius:10px;padding:9px 16px;font-weight:600;font-size:.9rem;cursor:pointer;text-decoration:none;transition:.15s}
+.k-btn-primary{background:var(--k-brand);color:#fff}.k-btn-primary:hover{background:#4338ca}
+.k-btn-green{background:var(--k-green);color:#fff}.k-btn-green:hover{background:#059669}
+.k-btn-light{background:#fff;color:var(--k-ink);border:1px solid var(--k-border)}.k-btn-light:hover{background:#f8fafc}
+.k-btn-lg{padding:14px 20px;font-size:1rem;width:100%;justify-content:center}
+.k-btn:disabled{opacity:.6;cursor:not-allowed}
+
+/* Forms */
+.k-field{margin-bottom:14px}
+.k-field label{display:block;font-weight:600;font-size:.85rem;margin-bottom:6px}
+.k-input,.k-select{width:100%;padding:10px 13px;border:1px solid var(--k-border);border-radius:10px;font-size:.95rem;font-family:inherit;background:#fff}
+.k-input:focus,.k-select:focus{outline:none;border-color:var(--k-brand);box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+
+/* Messages */
+.k-msg{padding:12px 16px;border-radius:11px;margin-bottom:14px;font-weight:600;font-size:.9rem}
+.k-msg.success{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
+.k-msg.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.k-msg.warning{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+.k-msg.info{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}
+
+/* Report rows */
+.rpt-row{display:flex;justify-content:space-between;padding:11px 20px;border-bottom:1px solid #f1f3f9;font-size:.92rem}
+.rpt-row.total{font-weight:800;background:#fafbff;border-top:2px solid var(--k-border)}
+.rpt-row .amt{font-variant-numeric:tabular-nums}
+.pos-amt{color:#059669}.neg-amt{color:#dc2626}
