@@ -1,0 +1,41 @@
+# Node / JS
+node_modules/
+dist/
+build/
+.next/
+.cache/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+venv/
+.venv/
+env/
+.pytest_cache/
+.mypy_cache/
+
+# OS & editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Compile / generated
+*.log
+*.pid
+*.seed
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+.env.local
+.env.*.local
+*.env
+**/.env
+**/.env.local
