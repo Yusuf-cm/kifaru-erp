@@ -81,7 +81,7 @@ def api_transfer_stock(request):
                 product=Product.objects.get(id=data.get('product_id')),
                 source_warehouse=Warehouse.objects.get(id=data.get('source_id')),
                 destination_warehouse=Warehouse.objects.get(id=data.get('dest_id')),
-                quantity=float(data.get('quantity', 0)),
+                quantity=Decimal(str(data.get('quantity', 0))),
                 user=request.user, reference="Manual Transfer (UI)",
             )
             return JsonResponse({'status': 'success', 'message': 'Stock transferred.'})

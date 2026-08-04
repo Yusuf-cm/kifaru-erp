@@ -1,4 +1,4 @@
-# config/settings.py  — REPLACE YOUR CURRENT settings.py WITH THIS
+# config/settings.py
 
 from pathlib import Path
 import os
