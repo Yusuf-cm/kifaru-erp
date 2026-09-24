@@ -27,8 +27,14 @@ def complete_sale(sale_id, user):
     if not sale.warehouse.is_retail_storefront:
         raise ValidationError("You can only sell directly from a Retail Storefront.")
 
-    # 1. Pre-flight stock check
-    for line in sale.lines.all():
+    # 1. Pre-flight integrity + stock check.
+    # Never let malformed line items create stock or accounting side effects.
+    for line in sale.lines.select_related('product').all():
+        if line.quantity <= ZERO:
+            raise ValidationError(f"Quantity for {line.product.name} must be greater than zero.")
+        if line.unit_price <= ZERO:
+            raise ValidationError(f"Unit price for {line.product.name} must be greater than zero.")
+
         available = line.product.get_stock_in_warehouse(sale.warehouse)
         if available < line.quantity:
             raise ValidationError(
