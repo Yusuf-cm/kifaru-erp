@@ -39,6 +39,8 @@ def api_checkout(request):
             data = json.loads(request.body)
             cart_items = data.get('items', [])
             payment_method = data.get('payment_method', 'CASH')
+            if payment_method not in {'CASH', 'MPESA', 'BANK'}:
+                return JsonResponse({'status': 'error', 'message': 'Unsupported payment method'}, status=400)
             warehouse_id = data.get('warehouse_id')
             reference = data.get('reference', '') # Capture M-Pesa Ref
             
@@ -61,10 +63,16 @@ def api_checkout(request):
 
                 for item in cart_items:
                     product = Product.objects.get(id=item['product_id'])
-                    # Strict Decimal parsing, no floats
+                    # The browser may suggest a quantity, but it must never be
+                    # allowed to set the authoritative selling price.
                     qty = Decimal(str(item['quantity']))
-                    price = Decimal(str(item['price']))
-                    
+                    if qty <= 0:
+                        raise ValueError(f"Quantity for {product.name} must be greater than zero.")
+
+                    price = product.selling_price
+                    if price <= 0:
+                        raise ValueError(f"Selling price for {product.name} is not configured.")
+
                     SaleLine.objects.create(
                         sale=sale, product=product, quantity=qty, unit_price=price
                     )
