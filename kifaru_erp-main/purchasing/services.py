@@ -25,6 +25,18 @@ def receive_purchase_order(po_id, user, payment_method='CASH'):
     if not po.lines.exists():
         raise ValidationError("Cannot receive a Purchase Order with no lines.")
 
+    # Validate the whole PO before writing stock movements or journals.
+    # Negative/zero purchasing lines would otherwise corrupt inventory and the GL.
+    for line in po.lines.select_related('product').all():
+        if line.quantity <= ZERO:
+            raise ValidationError(f"Quantity for {line.product.name} must be greater than zero.")
+        if line.unit_cost <= ZERO:
+            raise ValidationError(f"Unit cost for {line.product.name} must be greater than zero.")
+
+    valid_methods = {'CASH', 'MPESA', 'BANK', 'CREDIT'}
+    if payment_method not in valid_methods:
+        raise ValidationError(f"Unsupported payment method: {payment_method}")
+
     today = timezone.now().date()
     period = get_open_period(today)
 
