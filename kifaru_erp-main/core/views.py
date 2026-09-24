@@ -2,22 +2,29 @@
 import json
 from datetime import timedelta
 from decimal import Decimal
-from django.shortcuts import render
+
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
+from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from accounting.models import Account, JournalLine
 from accounting import services as acc
 from sales.models import Sale
 from inventory.models import Product
+from .access import is_manager, manager_required
 
 
-@login_required(login_url='/admin/login/')
+@login_required
+def home(request):
+    if is_manager(request.user):
+        return redirect('admin_dashboard')
+    return redirect('pos_dashboard')
+
+
+@manager_required
 def admin_dashboard(request):
     today = timezone.now().date()
-
-    # Real figures straight from the general ledger
     pnl = acc.income_statement()
 
     def bal(code):
@@ -29,7 +36,6 @@ def admin_dashboard(request):
     bank_balance = bal('1020')
     inventory_value = bal('1200')
 
-    # Real 7-day revenue from posted revenue journal lines (account 4000)
     rev_acc = Account.objects.filter(code='4000').first()
     chart_labels, chart_data = [], []
     for i in range(6, -1, -1):
@@ -37,18 +43,25 @@ def admin_dashboard(request):
         chart_labels.append(day.strftime('%a'))
         amount = Decimal('0.00')
         if rev_acc:
-            agg = (JournalLine.objects
-                   .filter(account=rev_acc, journal_entry__status='POSTED',
-                           journal_entry__date=day)
-                   .aggregate(c=Sum('credit'), d=Sum('debit')))
+            agg = (
+                JournalLine.objects
+                .filter(
+                    account=rev_acc,
+                    journal_entry__status='POSTED',
+                    journal_entry__date=day,
+                )
+                .aggregate(c=Sum('credit'), d=Sum('debit'))
+            )
             amount = (agg['c'] or Decimal('0.00')) - (agg['d'] or Decimal('0.00'))
         chart_data.append(float(amount))
 
     sales_today = Sale.objects.filter(created_at__date=today, status='PAID').count()
-    recent_sales = Sale.objects.filter(status='PAID').select_related(
-        'warehouse', 'cashier').order_by('-created_at')[:7]
+    recent_sales = (
+        Sale.objects.filter(status='PAID')
+        .select_related('warehouse', 'cashier')
+        .order_by('-created_at')[:7]
+    )
 
-    # Low-stock alerts
     low_stock = []
     for p in Product.objects.filter(is_active=True):
         total = p.get_total_stock()
