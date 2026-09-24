@@ -1,3 +1,4 @@
+import calendar
 import datetime
 from decimal import Decimal
 
@@ -17,7 +18,9 @@ class CompleteSaleTests(TestCase):
         self.user = User.objects.create_user('cashier', password='pass')
         today = datetime.date.today()
         AccountingPeriod.objects.create(
-            name='Test-Period', start_date=today.replace(day=1), end_date=today.replace(day=28),
+            name='Test-Period',
+            start_date=today.replace(day=1),
+            end_date=today.replace(day=calendar.monthrange(today.year, today.month)[1]),
         )
         for code, name, atype in [
             ('1000', 'Cash', 'ASSET'), ('1200', 'Inventory', 'ASSET'),
@@ -68,5 +71,15 @@ class CompleteSaleTests(TestCase):
         warehouse = Warehouse.objects.create(name='Warehouse (non-retail)')
         self.sale.warehouse = warehouse
         self.sale.save()
+        with self.assertRaises(ValidationError):
+            complete_sale(self.sale.id, self.user)
+
+    def test_complete_sale_rejects_non_positive_quantity(self):
+        self.sale.lines.all().update(quantity=Decimal('0'))
+        with self.assertRaises(ValidationError):
+            complete_sale(self.sale.id, self.user)
+
+    def test_complete_sale_rejects_non_positive_price(self):
+        self.sale.lines.all().update(unit_price=Decimal('0'))
         with self.assertRaises(ValidationError):
             complete_sale(self.sale.id, self.user)
