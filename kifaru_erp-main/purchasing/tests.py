@@ -1,3 +1,4 @@
+import calendar
 import datetime
 from decimal import Decimal
 
@@ -17,7 +18,9 @@ class ReceivePurchaseOrderTests(TestCase):
         self.user = User.objects.create_user('buyer', password='pass')
         today = datetime.date.today()
         AccountingPeriod.objects.create(
-            name='Test-Period', start_date=today.replace(day=1), end_date=today.replace(day=28),
+            name='Test-Period',
+            start_date=today.replace(day=1),
+            end_date=today.replace(day=calendar.monthrange(today.year, today.month)[1]),
         )
         for code, name, atype in [
             ('1000', 'Cash', 'ASSET'), ('1200', 'Inventory', 'ASSET'),
@@ -65,3 +68,12 @@ class ReceivePurchaseOrderTests(TestCase):
         )
         with self.assertRaises(ValidationError):
             receive_purchase_order(empty_po.id, self.user)
+
+    def test_rejects_non_positive_purchase_lines(self):
+        self.po.lines.update(quantity=Decimal('0'))
+        with self.assertRaises(ValidationError):
+            receive_purchase_order(self.po.id, self.user)
+
+    def test_rejects_unknown_payment_method(self):
+        with self.assertRaises(ValidationError):
+            receive_purchase_order(self.po.id, self.user, payment_method='CRYPTO')
