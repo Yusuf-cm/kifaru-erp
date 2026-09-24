@@ -16,9 +16,14 @@
         <div class="k-brand"><i class="bi bi-hexagon-fill dot"></i> Kifaru<span class="dot">.</span></div>
         <nav class="k-nav">
             <div class="sec">Main</div>
+            {% if can_manage %}
             <a href="{% url 'admin_dashboard' %}" class="{% if active == 'dashboard' %}active{% endif %}"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+            {% endif %}
+            {% if can_use_pos %}
             <a href="{% url 'pos_dashboard' %}" class="{% if active == 'pos' %}active{% endif %}"><i class="bi bi-display-fill"></i> Point of Sale</a>
+            {% endif %}
 
+            {% if can_manage %}
             <div class="sec">Inventory</div>
             <a href="{% url 'inventory_dashboard' %}" class="{% if active == 'inventory' %}active{% endif %}"><i class="bi bi-boxes"></i> Stock &amp; Products</a>
 
@@ -32,10 +37,13 @@
             <a href="{% url 'trial_balance' %}" class="{% if active == 'trial' %}active{% endif %}"><i class="bi bi-calculator"></i> Trial Balance</a>
             <a href="{% url 'chart_of_accounts' %}" class="{% if active == 'coa' %}active{% endif %}"><i class="bi bi-list-columns-reverse"></i> Chart of Accounts</a>
             <a href="{% url 'journal_list' %}" class="{% if active == 'journals' %}active{% endif %}"><i class="bi bi-journal-text"></i> Journal Entries</a>
+            {% endif %}
         </nav>
         <div class="k-side-foot">
+            {% if request.user.is_staff %}
             <a href="/admin/"><i class="bi bi-gear-fill"></i> Admin / Settings</a>
-            <form method="post" action="/admin/logout/" style="margin:0">{% csrf_token %}
+            {% endif %}
+            <form method="post" action="{% url 'logout' %}" style="margin:0">{% csrf_token %}
                 <button type="submit" style="background:none;border:none;color:inherit;font:inherit;cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 10px;width:100%;border-radius:8px" onmouseover="this.style.background='#111a2e';this.style.color='#fff'" onmouseout="this.style.background='none';this.style.color=''"><i class="bi bi-box-arrow-right"></i> Logout</button>
             </form>
         </div>
