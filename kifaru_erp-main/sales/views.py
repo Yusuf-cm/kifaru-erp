@@ -45,7 +45,14 @@ def api_checkout(request):
             if not cart_items:
                 return JsonResponse({'status': 'error', 'message': 'Cart is empty'}, status=400)
 
-            warehouse = Warehouse.objects.get(id=warehouse_id)
+            if payment_method not in {choice[0] for choice in Payment.METHOD_CHOICES}:
+                return JsonResponse({'status': 'error', 'message': 'Invalid payment method'}, status=400)
+            if not isinstance(cart_items, list) or any(not isinstance(item, dict) for item in cart_items):
+                return JsonResponse({'status': 'error', 'message': 'Invalid cart'}, status=400)
+            ids = [item.get('product_id') for item in cart_items]
+            if len(ids) != len(set(ids)):
+                return JsonResponse({'status': 'error', 'message': 'Duplicate products; update quantities instead'}, status=400)
+            warehouse = Warehouse.objects.get(id=warehouse_id, is_active=True)
 
             with transaction.atomic():
                 receipt_no = DocumentSequence.get_next_number('SALE')
@@ -60,10 +67,12 @@ def api_checkout(request):
                 total_amount = Decimal('0.00')
 
                 for item in cart_items:
-                    product = Product.objects.get(id=item['product_id'])
+                    product = Product.objects.get(id=item['product_id'], is_active=True)
                     # Strict Decimal parsing, no floats
                     qty = Decimal(str(item['quantity']))
-                    price = Decimal(str(item['price']))
+                    price = product.selling_price
+                    if not qty.is_finite() or qty <= 0:
+                        raise ValueError('Quantity must be a positive number')
                     
                     SaleLine.objects.create(
                         sale=sale, product=product, quantity=qty, unit_price=price
