@@ -100,3 +100,9 @@ body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;back
 .rpt-row.total{font-weight:800;background:#fafbff;border-top:2px solid var(--k-border)}
 .rpt-row .amt{font-variant-numeric:tabular-nums}
 .pos-amt{color:#059669}.neg-amt{color:#dc2626}
+
+/* Operations workspace: warm paper, deep forest and clear data hierarchy. */
+:root{--k-bg:#f4f3ed;--k-ink:#20372e;--k-muted:#707d73;--k-border:#e0e4d9;--k-brand:#2b6653;--k-brand-2:#43816b;--k-sidebar:#172c25;--k-sidebar-ink:#b0c4b6;--k-shadow:0 4px 24px #263c2706}
+.k-brand{padding:30px 24px;font-size:1.6rem;letter-spacing:-.05em}.k-nav .sec{color:#8ca895;letter-spacing:.16em;padding-top:24px}.k-nav a{padding:12px 14px;border-radius:6px}.k-nav a.active{background:#335446;box-shadow:none;border-left:3px solid #d8b76c}.k-nav a:hover,.k-side-foot a:hover{background:#274237}.k-main{padding:35px}.k-top{padding-bottom:24px;border-bottom:1px solid var(--k-border);margin-bottom:28px}.k-top h1{font-size:1.9rem;font-weight:600;letter-spacing:-.05em}.k-card{border-radius:10px}.k-card-pad{padding:25px}.k-chip{background:#e5ecdf;border-color:#cdd9c6;color:#335446}button,a,input,select{outline-offset:4px}:focus-visible{outline:3px solid #af8f47}table th{letter-spacing:.07em;font-size:.7rem}table td{padding-top:16px;padding-bottom:16px}@media(max-width:900px){.k-main{padding:20px 16px}.k-top h1{font-size:1.6rem}}
+
+.k-skip{position:fixed;top:-100px;left:16px;z-index:100;background:white;color:#20372e;padding:12px}.k-skip:focus{top:12px}

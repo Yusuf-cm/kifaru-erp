@@ -22,9 +22,8 @@ ALLOWED_HOSTS = [
 ]
 
 # While you are here, let's also allow CSRF for Railway:
-CSRF_TRUSTED_ORIGINS =[
-    f"https://{os.environ.get('RAILWAY_PUBLIC_DOMAIN', 'localhost')}"
-]
+CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in [os.environ.get('RAILWAY_PUBLIC_DOMAIN'), os.environ.get('RENDER_EXTERNAL_HOSTNAME')] if host]
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # ── APPS ────────────────────────────────────────────────────────────────────

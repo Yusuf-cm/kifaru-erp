@@ -70,3 +70,32 @@ class CompleteSaleTests(TestCase):
         self.sale.save()
         with self.assertRaises(ValidationError):
             complete_sale(self.sale.id, self.user)
+
+
+class CheckoutJourneyTests(CompleteSaleTests):
+    def setUp(self):
+        super().setUp()
+        self.sale.receipt_number = 'FIXTURE-ONLY'
+        self.sale.save()
+        self.client.force_login(self.user)
+        self.payload = {'items': [{'product_id': self.product.id, 'quantity': 2, 'price': 1}], 'warehouse_id': self.storefront.id, 'payment_method': 'CASH'}
+
+    def test_checkout_uses_catalogue_price(self):
+        response = self.client.post('/api/checkout/', self.payload, content_type='application/json', secure=True)
+        self.assertEqual(response.status_code, 200, response.content)
+        sale = Sale.objects.exclude(id=self.sale.id).get()
+        self.assertEqual(sale.lines.get().unit_price, Decimal('320'))
+        self.assertEqual(sale.status, 'PAID')
+
+    def test_invalid_quantities_roll_back(self):
+        for quantity in [0, -1, 'NaN', 'Infinity', 'bad']:
+            self.payload['items'][0]['quantity'] = quantity
+            before = Sale.objects.count()
+            response = self.client.post('/api/checkout/', self.payload, content_type='application/json', secure=True)
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(Sale.objects.count(), before)
+
+    def test_authenticated_pages_render(self):
+        for path in ['/', '/pos/', '/inventory/', '/purchasing/suppliers/', '/accounting/profit-loss/']:
+            response = self.client.get(path, secure=True)
+            self.assertEqual(response.status_code, 200, path)

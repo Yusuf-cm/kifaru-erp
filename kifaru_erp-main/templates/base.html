@@ -11,6 +11,7 @@
     {% block head %}{% endblock %}
 </head>
 <body>
+<a href="#main-content" class="k-skip">Skip to content</a>
 <div class="k-shell">
     <aside class="k-sidebar" id="kSidebar">
         <div class="k-brand"><i class="bi bi-hexagon-fill dot"></i> Kifaru<span class="dot">.</span></div>
@@ -41,10 +42,10 @@
         </div>
     </aside>
 
-    <main class="k-main">
+    <main class="k-main" id="main-content">
         <div class="k-top">
             <div style="display:flex;align-items:center;gap:12px">
-                <button class="k-hamb" onclick="document.getElementById('kSidebar').classList.toggle('open')"><i class="bi bi-list"></i></button>
+                <button class="k-hamb" aria-label="Toggle navigation" aria-controls="kSidebar" aria-expanded="false" onclick="this.setAttribute('aria-expanded', document.getElementById('kSidebar').classList.toggle('open'))"><i class="bi bi-list"></i></button>
                 <div>
                     <h1>{% block heading %}Dashboard{% endblock %}</h1>
                     <p>{% block subheading %}{% endblock %}</p>
